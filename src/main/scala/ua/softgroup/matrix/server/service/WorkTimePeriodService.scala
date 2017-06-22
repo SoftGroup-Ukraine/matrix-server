@@ -7,7 +7,7 @@ import ua.softgroup.matrix.server.persistent.entity.{WorkDay, WorkTimePeriod}
 /**
   * @author Oleksandr Tyshkovets <sg.olexander@gmail.com>
   */
-trait WorkTimePeriodService extends GeneralEntityService[WorkTimePeriod] {
+trait WorkTimePeriodService extends GenericEntityService[WorkTimePeriod] {
 
   def getLatestPeriodOf(workDay: WorkDay): Optional[WorkTimePeriod]
 

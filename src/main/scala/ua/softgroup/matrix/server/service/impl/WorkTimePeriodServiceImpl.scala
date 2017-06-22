@@ -12,12 +12,15 @@ import ua.softgroup.matrix.server.service.WorkTimePeriodService
   * @author Oleksandr Tyshkovets <sg.olexander@gmail.com> 
   */
 @Service
-class WorkTimePeriodServiceImpl @Autowired() (repository: WorkTimePeriodRepository)
-  extends AbstractEntityTransactionalService[WorkTimePeriod] (repository) with WorkTimePeriodService {
+class WorkTimePeriodServiceImpl @Autowired() (repository: WorkTimePeriodRepository) extends WorkTimePeriodService {
 
   override def getLatestPeriodOf(workDay: WorkDay): Optional[WorkTimePeriod] =
-    Optional.ofNullable(getRepository.findTopByWorkDayOrderByStartDesc(workDay))
+    Optional.ofNullable(repository.findTopByWorkDayOrderByStartDesc(workDay))
 
-  override protected def getRepository: WorkTimePeriodRepository = repository.asInstanceOf[WorkTimePeriodRepository]
+  override def getById(id: Long): Optional[WorkTimePeriod] = Optional.ofNullable(repository.findOne(id))
+
+  override def save(entity: WorkTimePeriod): WorkTimePeriod = repository.save(entity)
+
+  override def isExist(id: Long): Boolean = repository.exists(id)
 
 }

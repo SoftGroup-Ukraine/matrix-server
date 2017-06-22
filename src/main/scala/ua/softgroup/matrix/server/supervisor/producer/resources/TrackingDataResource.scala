@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+
 import ua.softgroup.matrix.server.persistent.entity._
 import ua.softgroup.matrix.server.service.{ProjectService, UserService, WorkDayService}
 import ua.softgroup.matrix.server.supervisor.producer.json.UserTimeAndCountResponse
@@ -27,6 +28,9 @@ import scala.collection.JavaConverters._
 import scala.util.{Failure, Try}
 
 /**
+  * This endpoint implements tracking related functionality.
+  * Implements 3, 4, 5 and 8 methods from the Supervisor API specs.
+  *
   * @author Oleksandr Tyshkovets <sg.olexander@gmail.com>
   */
 @Component
@@ -78,7 +82,7 @@ class TrackingDataResource @Autowired()(userService: UserService,
     val from = fromDate.parseToDate
     val to = toDate.parseToDate
 
-    val result = asScalaSet(workDayService.getAllWorkDaysOf(userId, projectId, from, to))
+    val result = workDayService.getAllWorkDaysOf(userId, projectId, from, to)
       .map(convertToUserAndProjectTrackingData)
       .toList
 
@@ -125,6 +129,7 @@ class TrackingDataResource @Autowired()(userService: UserService,
 
     val result = asScalaBuffer(userIds)
       .filter(_ > 0)
+      .filter(userService.isExist(_))
       .map(userId => {
         val workSeconds = workDayService.getTotalWorkSeconds(userId, from, to)
         val idleSeconds = workDayService.getTotalIdleSeconds(userId, from, to)

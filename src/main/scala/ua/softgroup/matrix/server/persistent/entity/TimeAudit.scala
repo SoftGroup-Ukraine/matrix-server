@@ -1,7 +1,7 @@
 package ua.softgroup.matrix.server.persistent.entity
 
 import java.time.LocalDateTime
-import javax.persistence.{Column, Entity, OneToOne}
+import javax.persistence._
 
 import org.hibernate.annotations.CreationTimestamp
 import org.springframework.data.jpa.domain.AbstractPersistable
@@ -22,28 +22,31 @@ class TimeAudit extends AbstractPersistable[java.lang.Long] {
 
   @Column
   @BeanProperty
-  var addedMinutes: Int = _
+  var timeSeconds: Int = _
 
-  @Column
+  @Column(columnDefinition = "TEXT")
   @BeanProperty
   var reason: String = _
 
-  @OneToOne
+  @Column
   @BeanProperty
-  var adder: User = _
+  var principalId: Long = _
 
-  @OneToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @BeanProperty
   var workDay: WorkDay = _
 
-  def this(addedMinutes: Int, reason: String, adder: User, workDay: WorkDay) {
+  def this(timeSeconds: Int, reason: String, principalId: Long, workDay: WorkDay) {
     this()
-    this.addedMinutes = addedMinutes
+    this.timeSeconds = timeSeconds
     this.reason = reason
-    this.adder = adder
+    this.principalId = principalId
     this.workDay = workDay
   }
 
+  override def toString: String = {
+    "TimeAudit(%s, creationDate=%s, timeSeconds=%d, reason=%s, principalId=%d, workDay=%s)"
+      .format(super.getId, creationDate, timeSeconds, reason, principalId, workDay)
+  }
 
-  override def toString = s"TimeAudit(${super.getId}, creationDate=$creationDate, addedMinutes=$addedMinutes, reason=$reason)"
 }

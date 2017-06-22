@@ -17,7 +17,6 @@ import scala.beans.{BeanProperty, BooleanBeanProperty}
 class WorkDay extends AbstractPersistable[java.lang.Long] {
 
   @Column
-  @CreationTimestamp
   @BeanProperty
   var date: LocalDate = _
 
@@ -36,10 +35,6 @@ class WorkDay extends AbstractPersistable[java.lang.Long] {
   @ManyToOne
   @BeanProperty
   var author: User = _
-
-  @Column
-  @BeanProperty
-  var reportUpdated: LocalDateTime = _
 
   @Column
   @BooleanBeanProperty
@@ -69,10 +64,6 @@ class WorkDay extends AbstractPersistable[java.lang.Long] {
   @BeanProperty
   var currencyId: Integer = _
 
-  @Column
-  @BeanProperty
-  var reason: String = _
-
   @ManyToOne
   @BeanProperty
   var project: Project = _
@@ -86,22 +77,19 @@ class WorkDay extends AbstractPersistable[java.lang.Long] {
     this.setId(id)
   }
 
-  def this(workSeconds: Integer, idleSeconds: Integer) {
-    this()
-    this.workSeconds = workSeconds
-    this.idleSeconds = idleSeconds
-  }
-
   def this(author: User, project: Project, date: LocalDate) {
     this()
     this.author = author
     this.project = project
     this.date = date
+
+    rate = project.rate
+    currencyId = project.rateCurrencyId
   }
 
   override def toString: String = {
-    s"WorkDay(id=%s, date=%s, workSeconds=%d, idleSeconds=%d, reportText=%s, checked=%b, jailerId=%d, coefficient=%f, symbolsCount=%d, windowsSwitchedCount=%d, rate=%s, currencyId=%s, reson=%s)"
-      .format(super.getId, date, workSeconds, idleSeconds, reportText, checked, jailerId, coefficient, symbolsCount, windowsSwitchedCount, rate, currencyId, reason)
+    s"WorkDay(id=%s, date=%s, workSeconds=%d, idleSeconds=%d, reportText=%s, checked=%b, jailerId=%d, coefficient=%f, symbolsCount=%d, windowsSwitchedCount=%d, rate=%s, currencyId=%s)"
+      .format(super.getId, date, workSeconds, idleSeconds, reportText, checked, jailerId, coefficient, symbolsCount, windowsSwitchedCount, rate, currencyId)
   }
 
 }

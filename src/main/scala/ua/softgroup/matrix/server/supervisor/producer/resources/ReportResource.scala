@@ -12,6 +12,7 @@ import org.hibernate.validator.constraints.NotEmpty
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
+
 import ua.softgroup.matrix.server.persistent.entity.WorkDay
 import ua.softgroup.matrix.server.service.{ProjectService, UserService, WorkDayService}
 import ua.softgroup.matrix.server.supervisor.producer.json.v2.{ErrorJson, ReportResponse}
@@ -20,6 +21,9 @@ import ua.softgroup.matrix.server.Utils._
 import scala.collection.JavaConverters._
 
 /**
+  * This endpoint implements time related functionality.
+  * Implements 9, 10, 11, 12, 13, 14, 15 and 16 methods from the Supervisor API specs.
+  *
   * @author Oleksandr Tyshkovets <sg.olexander@gmail.com>
   */
 @Component
@@ -56,9 +60,10 @@ class ReportResource @Autowired()(userService: UserService,
 
     val from = fromDate.parseToDate
     val to = toDate.parseToDate
+
     val result = asScalaBuffer(userIds)
       .filter(_ > 0)
-      .flatMap(userId => asScalaSet(workDayService.getUserWorkDaysBetween(userId, from, to)))
+      .flatMap(userId => workDayService.getUserWorkDaysBetween(userId, from, to))
       .map(convertWorkDayToReportJson)
       .sortWith(sortByDate)
 
@@ -81,7 +86,7 @@ class ReportResource @Autowired()(userService: UserService,
 
     val result = asScalaBuffer(projectIds)
       .filter(_ > 0)
-      .flatMap(projectId => asScalaSet(workDayService.getProjectWorkDaysBetween(projectId, from, to)))
+      .flatMap(projectId => workDayService.getProjectWorkDaysBetween(projectId, from, to))
       .map(convertWorkDayToReportJson)
       .sortWith(sortByDate)
 
@@ -99,7 +104,7 @@ class ReportResource @Autowired()(userService: UserService,
     val from = fromDate.parseToDate
     val to = toDate.parseToDate
 
-    val result = asScalaSet(workDayService.getWorkDaysBetween(from, to))
+    val result = workDayService.getWorkDaysBetween(from, to)
       .map(convertWorkDayToReportJson)
       .toList
       .sortWith(sortByDate)
@@ -137,7 +142,7 @@ class ReportResource @Autowired()(userService: UserService,
 
     asScalaBuffer(userIds)
       .filter(_ > 0)
-      .flatMap(userId => asScalaSet(workDayService.getUserNotCheckedWorkDays(userId)))
+      .flatMap(userId => workDayService.getUserNotCheckedWorkDays(userId))
       .map(workDay => checkWorkdayAndSave(checkedById, coefficient, workDay))
 
     Response.ok.build
@@ -155,7 +160,7 @@ class ReportResource @Autowired()(userService: UserService,
 
     asScalaBuffer(projectIds)
       .filter(_ > 0)
-      .flatMap(projectId => asScalaSet(workDayService.getProjectNotCheckedWorkDays(projectId)))
+      .flatMap(projectId => workDayService.getProjectNotCheckedWorkDays(projectId))
       .map(workDay => checkWorkdayAndSave(checkedById, coefficient, workDay))
 
     Response.ok.build

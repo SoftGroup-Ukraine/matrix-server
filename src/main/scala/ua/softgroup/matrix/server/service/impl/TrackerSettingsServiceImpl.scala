@@ -24,9 +24,13 @@ class TrackerSettingsServiceImpl @Autowired() (supervisorEndpoint: SupervisorEnd
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  private val CHECKPOINT_FREQUENTLY_SECONDS = "checkpoint.frequently.seconds"
-  private val SCREENSHOT_FREQUENTLY_PERIOD = "screenshot.frequently.period"
-  private val IDLE_START_SECONDS = "idle.start.seconds"
+  private val CHECKPOINT_FREQUENTLY_SECONDS_PROP = "checkpoint.frequently.seconds"
+  private val SCREENSHOT_FREQUENTLY_PERIOD_PROP = "screenshot.frequently.period"
+  private val IDLE_START_SECONDS_PROP = "idle.start.seconds"
+
+  private lazy val checkpointFrequentlySeconds = env.getRequiredProperty(CHECKPOINT_FREQUENTLY_SECONDS_PROP).toInt
+  private lazy val screenshotFrequentlyPeriod = env.getRequiredProperty(SCREENSHOT_FREQUENTLY_PERIOD_PROP).toInt
+  private lazy val idleStartSeconds = env.getRequiredProperty(IDLE_START_SECONDS_PROP).toInt
 
   override def getTrackerSettings (token: String): TrackerSettings = {
     var settingsMap: Map[String, Int] = Map()
@@ -38,9 +42,9 @@ class TrackerSettingsServiceImpl @Autowired() (supervisorEndpoint: SupervisorEnd
     }
 
     TrackerSettings(
-      settingsMap.getOrElse(CHECKPOINT_FREQUENTLY_SECONDS, env.getRequiredProperty(CHECKPOINT_FREQUENTLY_SECONDS).toInt),
-      settingsMap.getOrElse(SCREENSHOT_FREQUENTLY_PERIOD, env.getRequiredProperty(SCREENSHOT_FREQUENTLY_PERIOD).toInt),
-      settingsMap.getOrElse(IDLE_START_SECONDS, env.getRequiredProperty (IDLE_START_SECONDS).toInt)
+      settingsMap.getOrElse(CHECKPOINT_FREQUENTLY_SECONDS_PROP, checkpointFrequentlySeconds),
+      settingsMap.getOrElse(SCREENSHOT_FREQUENTLY_PERIOD_PROP, screenshotFrequentlyPeriod),
+      settingsMap.getOrElse(IDLE_START_SECONDS_PROP, idleStartSeconds)
     )
   }
 

@@ -11,9 +11,9 @@ import io.swagger.annotations._
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import ua.softgroup.matrix.server.persistent.entity.{Project, User, WorkDay}
-import ua.softgroup.matrix.server.service.{ProjectService, UserService, WorkDayService}
-import ua.softgroup.matrix.server.supervisor.producer.Utils.{calculateIdlePercent, parseData}
+
+import ua.softgroup.matrix.server.persistent.entity.WorkDay
+import ua.softgroup.matrix.server.service.{ProjectService, TimeAuditService, UserService, WorkDayService}
 import ua.softgroup.matrix.server.supervisor.producer.json.time.TimeManagement
 import ua.softgroup.matrix.server.supervisor.producer.json.{TimeJson, UserProjectTimeResponse, UserTimeResponse}
 import ua.softgroup.matrix.server.supervisor.producer.json.v2.ErrorJson
@@ -22,14 +22,18 @@ import ua.softgroup.matrix.server.Utils._
 import scala.collection.JavaConverters
 
 /**
-  * @author Oleksandr Tyshkovets <sg.olexander@gmail.com> 
+  * This endpoint implements time related functionality.
+  * Implements 6, 17 and 18 methods from the Supervisor API specs.
+  *
+  * @author Oleksandr Tyshkovets <sg.olexander@gmail.com>
   */
 @Component
 @Path("/times")
 @Api("times")
 class TimeResource @Autowired() (projectService: ProjectService,
                                  userService: UserService,
-                                 workDayService: WorkDayService) {
+                                 workDayService: WorkDayService,
+                                 timeAuditService: TimeAuditService) {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -43,7 +47,7 @@ class TimeResource @Autowired() (projectService: ProjectService,
   def getUserWorkTime(@ApiParam(example = "42") @Min(0) @PathParam("userId") userId: Long): Response = {
     logger.info(s"getUserCommonStatistic/$userId")
 
-    val response = JavaConverters.asScalaSet(projectService.getUserActiveProjects(userId))
+    val response = projectService.getUserActiveProjects(userId)
       .map(project => {
         val user = project.getUser
         val workSeconds = workDayService.getTotalWorkSeconds(user, project)
@@ -66,7 +70,7 @@ class TimeResource @Autowired() (projectService: ProjectService,
   def getProjectWorkTime(@ApiParam(example = "42") @Min(0) @PathParam("entityId") projectId: Long): Response = {
     logger.info(s"getEntityCommonStatistic/$projectId")
 
-    val response = JavaConverters.asScalaSet(projectService.getBySupervisorId(projectId))
+    val response = projectService.getBySupervisorId(projectId)
       .map(project => {
         val user = project.getUser
         val workSeconds = workDayService.getTotalWorkSeconds(user, project)
@@ -98,15 +102,14 @@ class TimeResource @Autowired() (projectService: ProjectService,
                                 .orElseGet(() => new WorkDay(user, project, date))
 
     val idlePercentBefore = calculateIdlePercent(workDay.getWorkSeconds, workDay.getIdleSeconds)
-    val workSeconds = if ("add" == timeManagement.getAction) workDay.getWorkSeconds + timeManagement.getTime
-                      else workDay.getWorkSeconds - timeManagement.getTime
-    workDay.setWorkSeconds(workSeconds)
+    val time = if ("add" == timeManagement.getAction) timeManagement.getTime else -timeManagement.getTime
+    val workSeconds = workDay.getWorkSeconds + time
+    workDay.setWorkSeconds(if (workSeconds > 0) workSeconds else 0)
 
     val idlePercentAfter = calculateIdlePercent(workDay.getWorkSeconds, workDay.getIdleSeconds)
-    val idelSeconds = if (timeManagement.getIdleAction == 1) (workDay.getIdleSeconds * idlePercentBefore / idlePercentAfter).toInt
+    val idleSeconds = if (timeManagement.getIdleAction == 1) (workDay.getIdleSeconds * idlePercentBefore / idlePercentAfter).toInt
                       else workDay.getIdleSeconds
-    workDay.setIdleSeconds(idelSeconds)
-    workDay.setReason(timeManagement.getReason)
+    workDay.setIdleSeconds(idleSeconds)
 
     workDayService.save(workDay)
 

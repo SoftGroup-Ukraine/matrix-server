@@ -31,6 +31,7 @@ import java.util.Date;
  */
 @Component
 public class TokenHelper {
+//    https://stackoverflow.com/questions/11410770/load-rsa-public-key-from-file
 
     private static final String KEY_ALGORITHM = "RSA";
     private static final String ALGORITHM = "RS512";
